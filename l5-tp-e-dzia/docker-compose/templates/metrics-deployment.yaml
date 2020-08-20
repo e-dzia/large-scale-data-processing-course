@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -c
+    kompose.version: 1.16.0 (0c01309)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: metrics
+  name: metrics
+spec:
+  replicas: {{ .Values.metricsReplicas }}
+  selector:
+    matchLabels:
+      io.kompose.service: metrics
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: metrics
+    spec:
+      nodeName: ip-172-31-16-35
+      containers:
+      - args:
+        - python
+        - metrics.py
+        env:
+        - name: CELERY_BROKER_URL
+          value: {{ .Values.redisUrl }}
+        - name: CELERY_RESULT_BACKEND
+          value: {{ .Values.celeryResultBackend }}
+        - name: prometheus_multiproc_dir
+          value: /prometheus_multiproc_dir
+        - name: REDIS_HOST
+          value: {{ .Values.redisHost }}
+        image: edzia/lsdp-app
+        name: metrics
+        resources: {}
+        volumeMounts:
+        - mountPath: /app
+          name: metrics-claim0
+        - mountPath: /prometheus_multiproc_dir
+          name: metrics-claim1
+      restartPolicy: Always
+      volumes:
+      - name: metrics-claim0
+        hostPath:
+          path: {{ .Values.appPath }}
+      - name: metrics-claim1
+        hostPath:
+          path: {{ .Values.prometheusMultiprocDirPath }}
+status: {}

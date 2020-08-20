@@ -1,0 +1,32 @@
+version: "3"
+services:
+  webapp:
+    image: nginx
+    restart: on-failure
+    volumes:
+      - .:/usr/share/nginx/html
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 50M
+        reservations:
+          cpus: '0.25'
+          memory: 20M
+    
+  check:
+    image: curlimages/curl
+    links:
+      - webapp
+    entrypoint:
+      - curl
+      - http://webapp:80
+    restart: on-failure
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 50M
+        reservations:
+          cpus: '0.25'
+          memory: 20M

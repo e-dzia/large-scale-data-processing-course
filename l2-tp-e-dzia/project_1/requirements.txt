@@ -1,0 +1,5 @@
+celery==4.3.0
+pandas
+praw
+celery-prometheus-exporter
+flask

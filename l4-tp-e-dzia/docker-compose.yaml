@@ -1,0 +1,79 @@
+version: '3.4'
+services:
+  standalone_app:
+    build: ./app_ml_models
+    command: [spark-submit, --packages, 'org.mongodb.spark:mongo-spark-connector_2.11:2.4.1', sample.py]
+    ports:
+      - 4040:4040
+    volumes:
+      - ./app_ml_models:/app
+
+#  worker:
+#    build: .
+#    image: &img worker
+#    command: [celery, worker, --app=worker.app, --queues=default, -BE]
+#    environment: &env
+#      - CELERY_BROKER_URL=redis://redis:6379/0
+#      - CELERY_RESULT_BACKEND=rpc
+#      - prometheus_multiproc_dir=/prometheus_multiproc_dir
+#    depends_on:
+#      - redis
+#    volumes: &volume
+#      - ./app:/app
+#      - ./data_persistency/prometheus_multiproc:/prometheus_multiproc_dir
+#
+#  scraping-worker:
+#    build: .
+#    image: *img
+#    command: [celery, worker, --app=scraping_worker.app, --queues=scraping, -BE]
+#    environment: *env
+#    depends_on:
+#      - redis
+#    volumes: *volume
+#
+#  embeddings-worker:
+#    build: .
+#    image: *img
+#    command: [celery, worker, --app=embeddings_worker.app, --queues=embeddings,
+#              -BE]
+#    environment: *env
+#    depends_on:
+#      - redis
+#    volumes: *volume
+#
+#  database-worker:
+#    build: .
+#    image: *img
+#    command: [celery, worker, --app=database_worker.app, --queues=database, -BE]
+#    environment: *env
+#    depends_on:
+#      - redis
+#      - mongodb
+#    volumes: *volume
+#    links:
+#      - mongodb
+#
+#  prometheus:
+#    image: prom/prometheus
+#    ports:
+#      - 9090:9090
+#    volumes:
+#      - ./app/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  redis:
+    image: redis:3.0-alpine
+
+  mongodb:
+    image: mongo
+    command: mongod --auth
+    environment:
+      - MONGO_INITDB_DATABASE=reddit
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=toor
+      - MONGODB_DATA_DIR=/data/db
+      - MONDODB_LOG_DIR=/dev/null
+    volumes:
+      - ./mongo_db/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ./data_persistency/mongo_db:/data/db
+    ports:
+      - '27017-27019:27017-27019'

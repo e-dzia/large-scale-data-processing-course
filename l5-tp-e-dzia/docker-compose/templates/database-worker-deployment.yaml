@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -c
+    kompose.version: 1.16.0 (0c01309)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: database-worker
+  name: database-worker
+spec:
+  replicas: {{ .Values.databaseWorkerReplicas }}
+  selector:
+    matchLabels:
+      io.kompose.service: database-worker
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: database-worker
+    spec:
+      containers:
+      - args:
+        - celery
+        - worker
+        - --app=database_worker.app
+        - --queues=database
+        - -BE
+        env:
+        - name: CELERY_BROKER_URL
+          value: {{ .Values.redisUrl }}
+        - name: CELERY_RESULT_BACKEND
+          value: {{ .Values.celeryResultBackend }}
+        - name: prometheus_multiproc_dir
+          value: /prometheus_multiproc_dir
+        - name: REDIS_HOST
+          value: {{ .Values.redisHost }}
+        image: edzia/lsdp-app
+        name: database-worker
+        resources: {}
+        volumeMounts:
+        - mountPath: /app
+          name: database-worker-claim0
+        - mountPath: /prometheus_multiproc_dir
+          name: database-worker-claim1
+      restartPolicy: Always
+      volumes:
+      - name: database-worker-claim0
+        hostPath:
+          path: {{ .Values.appPath }}
+      - name: database-worker-claim1
+        hostPath:
+          path: {{ .Values.prometheusMultiprocDirPath }}
+status: {}

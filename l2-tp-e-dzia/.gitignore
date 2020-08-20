@@ -1,0 +1,7 @@
+__pycache__
+
+.idea
+/project_1/app/reddit_credentials.json
+/project_1/prometheus/
+/project_1/prometheus_multiproc/
+/project_1/grafana_data/

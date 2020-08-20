@@ -1,0 +1,20 @@
+
+appPath: /home/ubuntu/tmp/app
+sparkAppPath: /home/ubuntu/tmp/app_ml_models
+prometheusMultiprocDirPath: /home/ubuntu/tmp/data_persistency/prometheus_multiproc
+grafanaPath: /home/ubuntu/tmp/data_persistency/grafana_data
+initMongoPath: /home/ubuntu/tmp/mongo_db/init-mongo.js
+mongoPath: /home/ubuntu/tmp/data_persistency/mongo_db
+prometheusPath: /home/ubuntu/tmp/app/prometheus.yml
+redisConfigPath: /home/ubuntu/tmp/redis.conf
+
+embeddingsWorkerReplicas: 1
+databaseWorkerReplicas: 1
+metricsReplicas: 1
+scrapingWorkersReplicas: 1
+workersReplicas: 1
+standaloneAppReplicas: 1
+
+redisUrl: "redis://redis-svc:6379/0"
+redisHost: "redis-svc"
+celeryResultBackend: "rpc"

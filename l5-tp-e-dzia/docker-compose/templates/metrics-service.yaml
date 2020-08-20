@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -c
+    kompose.version: 1.16.0 (0c01309)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: metrics
+  name: metrics
+spec:
+  selector:
+    io.kompose.service: metrics
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080

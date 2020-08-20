@@ -1,0 +1,9 @@
+.tox
+.idea
+__pycache__
+
+project_1
+/app/reddit_scraping/reddit_credentials.json
+/app/celerybeat-schedule
+/data_persistency/
+/app/embeddings/

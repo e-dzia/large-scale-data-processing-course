@@ -1,0 +1,12 @@
+.idea
+__pycache__
+
+project_1
+/app/reddit_scraping/reddit_credentials.json
+/app/celerybeat-schedule
+/data_persistency/
+/app/embeddings/embedding-18.bin
+/app/embeddings/embedding-18.magnitude
+/app/embeddings/embedding-40.bin
+/app/embeddings/embedding-txt-to-bin.py
+/.tox/

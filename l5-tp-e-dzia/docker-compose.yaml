@@ -1,0 +1,149 @@
+version: '3'
+#x-redash-service: &redash-service
+#  image: redash/redash:8.0.0.b32245
+#  depends_on:
+#    - postgres
+#    - redis
+#  env_file: ./redash/redash.env
+#  restart: always
+services:
+  standalone_app:
+    build: ./app_ml_models
+    command: [spark-submit, --packages, 'org.mongodb.spark:mongo-spark-connector_2.11:2.4.1', sample.py]
+    ports:
+      - 4040:4040
+    volumes:
+      - ./app_ml_models:/app
+
+  worker:
+    build: .
+    image: &img worker
+    command: [celery, worker, --app=worker.app, --queues=default, -BE]
+    environment: &env
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=rpc
+      - prometheus_multiproc_dir=/prometheus_multiproc_dir
+    depends_on:
+      - redis
+    volumes: &volume
+      - ./app:/app
+      - ./data_persistency/prometheus_multiproc:/prometheus_multiproc_dir
+
+  scraping-worker:
+    build: .
+    image: *img
+    command: [celery, worker, --app=scraping_worker.app, --queues=scraping, -BE]
+    environment: *env
+    depends_on:
+      - redis
+    volumes: *volume
+
+  embeddings-worker:
+    build: .
+    image: *img
+    command: [celery, worker, --app=embeddings_worker.app, --queues=embeddings,
+              -BE]
+    environment: *env
+    depends_on:
+      - redis
+    volumes: *volume
+
+  database-worker:
+    build: .
+    image: *img
+    command: [celery, worker, --app=database_worker.app, --queues=database, -BE]
+    environment: *env
+    depends_on:
+      - redis
+      - mongodb
+    volumes: *volume
+    links:
+      - mongodb
+
+  metrics:
+    build: .
+    image: *img
+    container_name: 'metrics'
+    command: [python, metrics.py]
+    environment: *env
+    depends_on:
+      - redis
+    volumes: *volume
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - 9090:9090
+    volumes:
+      - ./app/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    volumes:
+      - ./data_persistency/grafana_data:/var/lib/grafana
+
+  redis:
+    image: redis:3.0-alpine
+
+  mongodb:
+    image: mongo
+    command: mongod --auth
+    environment:
+      - MONGO_INITDB_DATABASE=reddit
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=toor
+      - MONGODB_DATA_DIR=/data/db
+      - MONDODB_LOG_DIR=/dev/null
+    volumes:
+      - ./mongo_db/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ./data_persistency/mongo_db:/data/db
+    ports:
+      - '27017-27019:27017-27019'
+
+
+###################################### REDASH ################################
+#  server:
+#    <<: *redash-service
+#    command: server
+#    ports:
+#      - "5000:5000"
+#    environment:
+#      REDASH_WEB_WORKERS: 4
+#  scheduler:
+#    <<: *redash-service
+#    command: scheduler
+#    environment:
+#      QUEUES: "celery"
+#      WORKERS_COUNT: 1
+#  scheduled_worker:
+#    <<: *redash-service
+#    command: worker
+#    environment:
+#      QUEUES: "scheduled_queries"
+#      WORKERS_COUNT: 1
+#  adhoc_worker:
+#    <<: *redash-service
+#    command: worker
+#    environment:
+#      QUEUES: "queries"
+#      WORKERS_COUNT: 2
+#  redis:
+#    image: redis:3.0-alpine
+#    restart: always
+#  postgres:
+#    image: postgres:9.6.16-alpine
+#    env_file: ./redash/redash.env
+#    volumes:
+#      - ./data_persistency/redash:/var/lib/postgresql/data
+#    restart: always
+#  nginx:
+#    image: redash/nginx:latest
+#    ports:
+#      - "80:80"
+#    depends_on:
+#      - server
+#    links:
+#      - server:redash
+#    restart: always

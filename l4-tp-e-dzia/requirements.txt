@@ -1,0 +1,9 @@
+celery==4.3.0
+redis
+pandas
+praw
+celery-prometheus-exporter
+flask
+pymagnitude
+pymongo
+attrs
